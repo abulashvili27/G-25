@@ -8,16 +8,13 @@ class Canada:
         self.land_area = land_area
 
     def __str__(self):
-        if self.province_or_territory == 0 and self.land_area == 0:
-
-            return f"Population - {self.population}"
-        else:
-            return f"Province or Territory - {self.province_or_territory}, Population - {self.population}, Land/Area - {self.land_area}"
+        return f"Province or Territory - {self.province_or_territory}, Population - {self.population}, Land/Area - {self.land_area}"
 
 
 def create_table(con):
     cur = con.cursor()
-    cur.execute("CREATE TABLE IF NOT EXISTS density(province_or_teritory TEXT, population INTEGER, land_area REAL)")
+    cur.execute(
+        "CREATE TABLE IF NOT EXISTS density(province_or_teritory TEXT, population INTEGER, land_area REAL)")
     return cur
 
 
@@ -50,10 +47,17 @@ def count_records_in_db(con, table_name):
     return result[0]
 
 
-def all_data_from_db(con):
-    cur = con.cursor()
-    cur.execute("SELECT * FROM density")
-    return cur.fetchall()
+def all_data_write_in_file(con):
+    result2 = []
+    with open("all_data_file", "w") as f:
+        cur = con.cursor()
+        for row in cur.execute("SELECT * FROM density"):
+            result2.append(row)
+
+        for element in result2:
+            f.write(str(element) + "\n")
+
+    f.close()
 
 
 def load_data(con):
@@ -76,9 +80,33 @@ def countries_less_than_1mp(con):
             result.append(row)
 
         for element in result:
-            f.write(element + "\n")
+            f.write(str(element) + "\n")
 
     f.close()
+
+
+# ცუდი ფორმატით გამოაქვს ეს გამოსასწორებელი მაქვს რაღაც ურევს
+def countries_less_than_1mp_output(con):
+    result = []
+    with open("lt 1m population", 'r') as f2:
+        for line in f2.readlines():
+            row = line.strip().split(",")
+            result.append(row)
+
+    f2.close()
+    return result
+
+
+def lt_1_or_gt_5(con):
+    cur = con.cursor()
+    cur.execute("SELECT * FROM density where population < 1000000 or population > 5000000")
+    return cur.fetchall()
+
+
+def area_gt_200K(con):
+    cur = con.cursor()
+    cur.execute("SELECT * FROM density where land_area > 200000")
+    return cur.fetchall()
 
 
 def main():
@@ -86,10 +114,12 @@ def main():
     create_table(connection)
     insert_data_in_db(connection)
     count_records_in_db(connection, "density")
-    print(all_data_from_db(connection))
-    # load_data(connection)
-    # only_population(connection)
+    load_data(connection)
+    only_population(connection)
     countries_less_than_1mp(connection)
+    print(countries_less_than_1mp_output(connection))
+    print(lt_1_or_gt_5(connection))
+    print(area_gt_200K(connection))
 
 
 if __name__ == '__main__':
