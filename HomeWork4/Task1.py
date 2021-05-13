@@ -8,7 +8,11 @@ class Canada:
         self.land_area = land_area
 
     def __str__(self):
-        return f"Province or Territory - {self.province_or_territory}, Population - {self.population}, Land/Area - {self.land_area}"
+        if self.province_or_territory == 0 and self.land_area == 0:
+
+            return f"Population - {self.population}"
+        else:
+            return f"Province or Territory - {self.province_or_territory}, Population - {self.population}, Land/Area - {self.land_area}"
 
 
 def create_table(con):
@@ -46,12 +50,35 @@ def count_records_in_db(con, table_name):
     return result[0]
 
 
-def all_data(con):
+def all_data_from_db(con):
     cur = con.cursor()
     cur.execute("SELECT * FROM density")
-
     return cur.fetchall()
 
+
+def load_data(con):
+    cur = con.cursor()
+    for row in cur.execute("SELECT * FROM density"):
+        print(Canada(row[0], row[1], row[2]))
+
+
+def only_population(con):
+    cur = con.cursor()
+    for row in cur.execute("SELECT population FROM density"):
+        print("Population - ", row)
+
+
+def countries_less_than_1mp(con):
+    result = []
+    with open("lt 1m population", "w") as f:
+        cur = con.cursor()
+        for row in cur.execute("SELECT * FROM density WHERE population between 0 AND 1000000"):
+            result.append(row)
+
+        for element in result:
+            f.write(element + "\n")
+
+    f.close()
 
 
 def main():
@@ -59,7 +86,10 @@ def main():
     create_table(connection)
     insert_data_in_db(connection)
     count_records_in_db(connection, "density")
-    print("All data - ", all_data(connection))
+    print(all_data_from_db(connection))
+    # load_data(connection)
+    # only_population(connection)
+    countries_less_than_1mp(connection)
 
 
 if __name__ == '__main__':
